@@ -1,165 +1,33 @@
-# Task CRUD API
+## AI vs Me
 
-A simple REST API built with Python and FastAPI for managing tasks.
+### My Prompt
 
-The API supports full CRUD operations using an in-memory Python list. It also includes optional features such as task filtering, searching, and task statistics.
+I asked AI to build a Task CRUD API using Python and FastAPI with an in-memory list. The API had to support GET, POST, PUT, and DELETE operations, return the correct 200, 201, 204, 400, and 404 status codes, validate empty task titles, and provide Swagger UI documentation.
 
-## Features
+### Test Results
 
-- Create a new task
-- List all tasks
-- Get a single task by ID
-- Update an existing task
-- Delete a task
-- Input validation
-- Correct HTTP status codes
-- Interactive Swagger UI documentation
-- Filter tasks by completion status
-- Search tasks by title
-- View task statistics
+I tested the AI-generated version using the same requirements as my hand-built API.
 
-## Installation
+- GET `/tasks` returned `200 OK`.
+- POST `/tasks` returned `201 Created`.
+- PUT `/tasks/{task_id}` returned `200 OK`.
+- DELETE `/tasks/{task_id}` returned `204 No Content`.
+- A missing task returned `404 Not Found`.
+- An empty title returned `400 Bad Request`.
 
-Create a virtual environment:
+### What the AI Did Well
 
-```powershell
-python -m venv venv
-```
+The AI generated a compact implementation of the core CRUD API. It correctly handled the CRUD operations and the HTTP status codes that I tested.
 
-Activate the virtual environment in PowerShell:
+### What Was Different in My Version
 
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\venv\Scripts\Activate.ps1
-```
+My final hand-built version contains additional optional features that were not included in the AI-generated version:
 
-Install the required packages:
+- Filtering tasks using `?done=true` and `?done=false`
+- Searching tasks using `?search=...`
+- Combining filtering and search
+- A `/stats` endpoint for total, completed, and open task counts
 
-```powershell
-pip install -r requirements.txt
-```
+### What I Learned
 
-## Run the API
-
-Start the server with:
-
-```powershell
-uvicorn main:app --reload
-```
-
-The API will run at:
-
-`http://127.0.0.1:8000`
-
-Swagger UI is available at:
-
-`http://127.0.0.1:8000/docs`
-
-## API Endpoints
-
-| Method | Endpoint | Description | Success Status |
-|---|---|---|---|
-| GET | `/tasks` | List all tasks | 200 |
-| GET | `/tasks/{task_id}` | Get a task by ID | 200 |
-| POST | `/tasks` | Create a new task | 201 |
-| PUT | `/tasks/{task_id}` | Update an existing task | 200 |
-| DELETE | `/tasks/{task_id}` | Delete a task | 204 |
-| GET | `/stats` | Show task statistics | 200 |
-
-Invalid request bodies return `400 Bad Request`.
-
-Requests for task IDs that do not exist return `404 Not Found`.
-
-## Example curl Response
-
-Command:
-
-```powershell
-curl.exe -i http://127.0.0.1:8000/tasks/1
-```
-
-Example output:
-
-```text
-HTTP/1.1 200 OK
-server: uvicorn
-content-type: application/json
-
-{"id":1,"title":"Learn Python","done":false}
-```
-
-## Optional Features
-
-### Filter Tasks
-
-Return only completed tasks:
-
-```text
-GET /tasks?done=true
-```
-
-Return only open tasks:
-
-```text
-GET /tasks?done=false
-```
-
-For example:
-
-```powershell
-curl.exe -i "http://127.0.0.1:8000/tasks?done=true"
-```
-
-### Search Tasks
-
-Tasks can be searched by words contained in their titles.
-
-Example:
-
-```text
-GET /tasks?search=python
-```
-
-Filtering and searching can also be combined:
-
-```text
-GET /tasks?done=false&search=python
-```
-
-For example:
-
-```powershell
-curl.exe -i "http://127.0.0.1:8000/tasks?done=false&search=python"
-```
-
-### Task Statistics
-
-The stats endpoint calculates the total number of tasks, completed tasks, and open tasks.
-
-```text
-GET /stats
-```
-
-Example response:
-
-```json
-{
-  "total": 3,
-  "done": 1,
-  "open": 2
-}
-```
-
-## Swagger UI
-
-FastAPI automatically generates interactive API documentation using Swagger UI.
-
-The full CRUD cycle can be tested directly from the browser using the **Try it out** button.
-
-![Swagger UI](swagger.png)
-
-## Data Storage
-
-This project uses an in-memory Python list for storing tasks.
-
-There is no database or file-based storage. Because the data is stored only in memory, tasks created, updated, or deleted while the server is running are lost when the application restarts.
+Building the API myself first helped me understand routing, validation, HTTP status codes, error handling, and in-memory data. The AI could generate the core solution quickly, but testing and comparing both versions was still necessary to verify that the generated code actually met the requirements.

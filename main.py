@@ -1,8 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
-app = FastAPI()
+app = FastAPI(
+    title="Task API",
+    description="A simple CRUD API for managing tasks.",
+    version="1.0"
+)
 
 tasks = [
     {"id": 1, "title": "Learn Python", "done": False},
@@ -20,7 +24,7 @@ class TaskUpdate(BaseModel):
     done: bool | None = None
 
 
-@app.get("/")
+@app.get("/", summary="Show API information")
 def read_root():
     return {
         "name": "Task API",
@@ -29,19 +33,19 @@ def read_root():
     }
 
 
-@app.get("/health")
+@app.get("/health", summary="Check API health")
 def health_check():
     return {
         "status": "ok"
     }
 
 
-@app.get("/tasks")
+@app.get("/tasks", summary="List all tasks")
 def get_tasks():
     return tasks
 
 
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", summary="Get a task by ID")
 def get_task(task_id: int):
     for task in tasks:
         if task["id"] == task_id:
@@ -53,7 +57,7 @@ def get_task(task_id: int):
     )
 
 
-@app.post("/tasks", status_code=201)
+@app.post("/tasks", status_code=201, summary="Create a new task")
 def create_task(task: TaskCreate):
     if task.title is None or task.title.strip() == "":
         return JSONResponse(
@@ -74,50 +78,28 @@ def create_task(task: TaskCreate):
     return new_task
 
 
-@app.put("/tasks/{task_id}")
-async def update_task(task_id: int, request: Request):
-    try:
-        body = await request.json()
-    except Exception:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Invalid JSON body"}
-        )
-
-    if not body:
+@app.put("/tasks/{task_id}", summary="Update an existing task")
+def update_task(task_id: int, update: TaskUpdate):
+    if not update.model_fields_set:
         return JSONResponse(
             status_code=400,
             content={"error": "Request body cannot be empty"}
         )
 
-    allowed_fields = {"title", "done"}
-
-    if not any(field in body for field in allowed_fields):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Body must contain title and/or done"}
-        )
-
-    if "title" in body:
-        if not isinstance(body["title"], str) or body["title"].strip() == "":
+    if "title" in update.model_fields_set:
+        if update.title is None or update.title.strip() == "":
             return JSONResponse(
                 status_code=400,
                 content={"error": "Title cannot be empty"}
             )
 
-    if "done" in body and not isinstance(body["done"], bool):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Done must be true or false"}
-        )
-
     for task in tasks:
         if task["id"] == task_id:
-            if "title" in body:
-                task["title"] = body["title"]
+            if "title" in update.model_fields_set:
+                task["title"] = update.title
 
-            if "done" in body:
-                task["done"] = body["done"]
+            if "done" in update.model_fields_set:
+                task["done"] = update.done
 
             return task
 
@@ -127,7 +109,7 @@ async def update_task(task_id: int, request: Request):
     )
 
 
-@app.delete("/tasks/{task_id}", status_code=204)
+@app.delete("/tasks/{task_id}", status_code=204, summary="Delete a task")
 def delete_task(task_id: int):
     for index, task in enumerate(tasks):
         if task["id"] == task_id:

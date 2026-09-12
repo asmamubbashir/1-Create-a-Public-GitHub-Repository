@@ -29,7 +29,7 @@ def read_root():
     return {
         "name": "Task API",
         "version": "1.0",
-        "endpoints": ["/tasks"]
+        "endpoints": ["/tasks", "/stats"]
     }
 
 
@@ -40,9 +40,30 @@ def health_check():
     }
 
 
-@app.get("/tasks", summary="List all tasks")
-def get_tasks():
-    return tasks
+@app.get("/tasks", summary="List, filter, or search tasks")
+def get_tasks(
+    done: bool | None = None,
+    search: str | None = None
+):
+    result = tasks
+
+    if done is not None:
+        result = [
+            task
+            for task in result
+            if task["done"] == done
+        ]
+
+    if search is not None and search.strip() != "":
+        search_text = search.lower()
+
+        result = [
+            task
+            for task in result
+            if search_text in task["title"].lower()
+        ]
+
+    return result
 
 
 @app.get("/tasks/{task_id}", summary="Get a task by ID")
@@ -62,7 +83,9 @@ def create_task(task: TaskCreate):
     if task.title is None or task.title.strip() == "":
         return JSONResponse(
             status_code=400,
-            content={"error": "Title is required and cannot be empty"}
+            content={
+                "error": "Title is required and cannot be empty"
+            }
         )
 
     new_id = max(t["id"] for t in tasks) + 1 if tasks else 1
@@ -109,7 +132,11 @@ def update_task(task_id: int, update: TaskUpdate):
     )
 
 
-@app.delete("/tasks/{task_id}", status_code=204, summary="Delete a task")
+@app.delete(
+    "/tasks/{task_id}",
+    status_code=204,
+    summary="Delete a task"
+)
 def delete_task(task_id: int):
     for index, task in enumerate(tasks):
         if task["id"] == task_id:
@@ -120,3 +147,20 @@ def delete_task(task_id: int):
         status_code=404,
         content={"error": f"Task {task_id} not found"}
     )
+
+
+@app.get("/stats", summary="Show task statistics")
+def get_stats():
+    total = len(tasks)
+    done = sum(
+        1
+        for task in tasks
+        if task["done"]
+    )
+    open_tasks = total - done
+
+    return {
+        "total": total,
+        "done": done,
+        "open": open_tasks
+    }
